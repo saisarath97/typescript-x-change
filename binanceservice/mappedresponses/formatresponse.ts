@@ -7,6 +7,21 @@ interface OrderBookData {
   asks?: [string, string][];
 }
 
+interface KlineRawData {
+  0: number; // Kline open time
+  1: string; // Open price
+  2: string; // High price
+  3: string; // Low price
+  4: string; // Close price
+  5: string; // Volume
+  6: number; // Kline Close time
+  7: string; // Quote asset volume
+  8: number; // Number of trades
+  9: string; // Taker buy base asset volume
+  10: string; // Taker buy quote asset volume
+  11: string; // Unused field, ignore
+}
+
 interface KlineData {
   k?: {
     t?: number;
@@ -94,6 +109,24 @@ const mapToStandardKlineFormat = (data: KlineData, symbol: string, type: string)
   };
 };
 
+// Maps Binance WebSocket kline data to the standard format
+const mapApiKlineToStandardKlineFormat = (data: KlineRawData, symbol: string, type: string): StandardizedData => {
+  return {
+    symbol,
+    data: {
+      startTime: new Date(data[0]),
+      closeTime: new Date(data[6]),
+      interval: 'UNKNOWN', // Since interval isn't provided in raw data
+      openPrice: data[1],
+      closePrice: data[4],
+      highPrice: data[2],
+      lowPrice: data[3],
+      volume: data[5],
+    },
+    type
+  };
+};
+
 // Maps Binance WebSocket deals (market history) data to the standard format
 const mapDealsData = (rawData: DealsData, symbol: string, type: string): StandardizedData => {
   return {
@@ -160,6 +193,9 @@ const formatResponse = (data: any, symbol: string, type: string): StandardizedDa
     default:
       if (type.startsWith(StreamType.KLINE)) {
         return mapToStandardKlineFormat(data, symbol, type);
+      }
+      if (type.startsWith("historic")) {
+        return mapApiKlineToStandardKlineFormat(data, symbol, type);
       }
       return null;
   }

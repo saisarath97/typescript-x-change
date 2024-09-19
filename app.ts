@@ -127,7 +127,6 @@ const handleOrderBookData = async (data: any) => {
 // Handle Market History data and store it in Redis
 const handleMarketHistoryData = async (data: any) => {
   try {
-    console.log("market history reached")
     const key = `${data.symbol}_${data.type}`;
     const existingData = await redisClient.get(key);
 
@@ -150,7 +149,6 @@ const handleMarketHistoryData = async (data: any) => {
     marketHistory.data = marketHistory.data;
 
     const jsonData = JSON.stringify(marketHistory);
-    console.log("new market data ", jsonData);
     await redisClient.set(key, jsonData);
 
     // console.log(`Updated market history for ${data.symbol} (${data.type}) stored in Redis with max 100 entries`);
