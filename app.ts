@@ -84,9 +84,9 @@ const handleData = async (data: any, symbol: string, streamType: string) => {
       await handleMarketHistoryData(data);
     } else if (streamType.includes(StreamType.KLINE)) {
       await handleKlineData(data);
-    }
-
+    }else if (streamType.includes(StreamType.TICKER)){
     await redisClient.set(`${symbol}_${streamType}`, jsonData);
+    }
     // console.log(`Stored data in Redis for ${symbol} (${streamType})`);
   } catch (err) {
     console.error('Redis set error:', err);
@@ -113,9 +113,6 @@ const handleOrderBookData = async (data: any) => {
     orderBook.data.asks = [...orderBook.data.asks, ...data.data.asks].slice(-100);
 
     const jsonData = JSON.stringify(orderBook);
-    // Explicitly delete the key
-    // await redisClient.del(key);
-
 
     await redisClient.set(key, jsonData);
     // console.log(`Updated order book for ${data.symbol} (${data.type}) stored in Redis`);
@@ -146,7 +143,7 @@ const handleMarketHistoryData = async (data: any) => {
     }
 
     marketHistory.data.push(data.data);
-    marketHistory.data = marketHistory.data;
+    marketHistory.data = marketHistory.data.slice(-100);
 
     const jsonData = JSON.stringify(marketHistory);
     await redisClient.set(key, jsonData);
@@ -177,7 +174,6 @@ const handleKlineData = async (data: any) => {
         klineHistory.data = [];
       }
     }
-
     klineHistory.data.push(data.data);
     klineHistory.data = klineHistory.data.slice(-200);
 
@@ -192,8 +188,6 @@ const handleKlineData = async (data: any) => {
 
 // Dynamically initialize WebSocket connections based on bot configuration
 botsConfig.forEach(({ symbol, source }) => {
-  setInterval(() => {
-  }, 10000);
   switch (source.toLowerCase()) {
     case 'binance':
       BinanceWebSocket(symbol, handleData);
@@ -201,6 +195,8 @@ botsConfig.forEach(({ symbol, source }) => {
     default:
       console.log(`Unsupported source: ${source}`);
   }
+  setInterval(() => {
+  }, 10000);
 });
 
 app.listen(port, () => {

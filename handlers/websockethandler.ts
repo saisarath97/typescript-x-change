@@ -80,9 +80,11 @@ const handleSubscribe = async (ws: WebSocket, data: MessageData): Promise<void> 
       // Handle Kline subscription with optional startTime and endTime
       if (startTime && endTime) {
         await sendKlineData(ws, symbol, channel, startTime, endTime);
+        // clients.get(ws)?.add(`${symbol}_${channel}`);
       } else {
         // Subscribe to live kline updates if no historical range is provided
         clients.get(ws)?.add(`${symbol}_${channel}`);
+        await sendInitialData(ws, symbol, channel);
         console.log(`Client subscribed to live ${symbol} (${channel})`);
       }
     } else {
